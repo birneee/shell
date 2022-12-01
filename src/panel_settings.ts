@@ -15,6 +15,7 @@ export class Indicator {
 
     toggle_tiled : any
     toggle_titles: null | any
+    toggle_stack_tabs_buttons: any
     toggle_active: any
     border_radius: any
 
@@ -47,6 +48,14 @@ export class Indicator {
         let bm = this.button.menu;
 
         this.toggle_tiled = tiled(ext)
+
+        this.toggle_stack_tabs_buttons = toggle(
+            _("Show Tab Buttons for Stacked Windows"),
+            ext.settings.active_hint(),
+            (toggle) => {
+                ext.settings.set_show_stack_tab_buttons(toggle.state);
+            }
+        )
 
         this.toggle_active = toggle(
             _("Show Active Hint"),
@@ -90,6 +99,7 @@ export class Indicator {
             bm.addMenuItem(this.toggle_titles);
         }
 
+        bm.addMenuItem(this.toggle_stack_tabs_buttons);
         bm.addMenuItem(this.toggle_active);
         bm.addMenuItem(this.border_radius);
 
