@@ -133,7 +133,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     })
 
     const stack_tab_buttons_label = new Gtk.Label({
-        label: "Show Tab Buttons for Stacked Windows",
+        label: "Show Tabs for Stacked Windows",
         xalign: 0.0
     })
 

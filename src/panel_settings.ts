@@ -50,7 +50,7 @@ export class Indicator {
         this.toggle_tiled = tiled(ext)
 
         this.toggle_stack_tabs_buttons = toggle(
-            _("Show Tab Buttons for Stacked Windows"),
+            _("Show Tabs for Stacked Windows"),
             ext.settings.active_hint(),
             (toggle) => {
                 ext.settings.set_show_stack_tab_buttons(toggle.state);

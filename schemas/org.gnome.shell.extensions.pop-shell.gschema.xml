@@ -35,7 +35,7 @@
 
         <key type="b" name="show-stack-tab-buttons">
             <default>true</default>
-            <summary>Allow showing tab buttons for stacked windows</summary>
+            <summary>Show tabs for stacked windows</summary>
         </key>
 
         <key type="b" name="show-skip-taskbar">
