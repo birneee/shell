@@ -7,15 +7,14 @@ import type { ShellWindow } from './window';
 
 import * as Ecs from 'ecs';
 import * as a from 'arena';
-import * as utils from 'utils';
 
 const Arena = a.Arena;
 const { Clutter, GObject, St } = imports.gi;
 
-const ACTIVE_TAB = 'pop-shell-tab pop-shell-tab-active';
-const INACTIVE_TAB = 'pop-shell-tab pop-shell-tab-inactive';
-const URGENT_TAB = 'pop-shell-tab pop-shell-tab-urgent';
-const INACTIVE_TAB_STYLE = '#9B8E8A';
+const BASE_TAB = 'pop-shell-tab';
+const ACTIVE_TAB = 'pop-shell-tab-active';
+const INACTIVE_TAB = 'pop-shell-tab-inactive';
+const URGENT_TAB = 'pop-shell-tab-urgent';
 
 export var TAB_HEIGHT: number = 24
 
@@ -64,6 +63,7 @@ const TabButton = GObject.registerClass({
     _init(window: ShellWindow) {
         const icon = window.icon(window.ext, 24)
         icon.set_x_align(Clutter.ActorAlign.START)
+        icon.add_style_class_name('icon')
 
         const label = new St.Label({
             y_expand: true,
@@ -73,17 +73,20 @@ const TabButton = GObject.registerClass({
         })
 
         label.text = window.title()
+        label.add_style_class_name('label')
 
         const container = new St.BoxLayout({
             y_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
         })
+        container.add_style_class_name('container')
 
         const close_button = new ContainerButton(new St.Icon({
             icon_name: 'window-close-symbolic',
             icon_size: 24,
             y_align: Clutter.ActorAlign.CENTER,
         }))
+        close_button.add_style_class_name('close-button')
 
         close_button.connect('clicked', () => {
             window.meta.delete(global.get_current_time())
@@ -103,6 +106,8 @@ const TabButton = GObject.registerClass({
             y_align: Clutter.ActorAlign.CENTER,
         })
 
+        this.add_style_class_name(BASE_TAB)
+        this.add_style_class_name('button')
 
         this._title = label
     }
@@ -174,7 +179,6 @@ export class Stack {
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
         let comp = this.tabs.length
-        this.bind_hint_events(tab);
         this.tabs.push(tab);
         this.watch_signals(comp, id, window);
         this.widgets.tabs.add(button);
@@ -220,8 +224,7 @@ export class Stack {
 
         let id = 0;
 
-        for (const [idx, component] of this.tabs.entries()) {
-            let name;
+        for (const [_, component] of this.tabs.entries()) {
 
             this.window_exec(id, component.entity, (window) => {
                 const actor = window.meta.get_compositor_private();
@@ -229,28 +232,21 @@ export class Stack {
                 if (Ecs.entity_eq(entity, component.entity)) {
                     this.active_id = id;
                     component.active = true;
-                    name = ACTIVE_TAB;
                     if (actor) actor.show()
                 } else {
                     component.active = false;
-                    name = INACTIVE_TAB;
                     if (actor) actor.hide();
                 }
 
                 let button = this.buttons.get(component.button);
                 if (button) {
-                    button.set_style_class_name(name);
-                    let tab_color = '';
                     if (component.active) {
-                        let settings = this.ext.settings;
-                        let color_value = settings.hint_color_rgba();
-                        tab_color = `${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
+                        button.add_style_class_name(ACTIVE_TAB)
+                        button.remove_style_class_name(INACTIVE_TAB)
                     } else {
-                        tab_color = `${INACTIVE_TAB_STYLE}`;
+                        button.remove_style_class_name(ACTIVE_TAB)
+                        button.add_style_class_name(INACTIVE_TAB)   
                     }
-
-                    const tab_border_radius = this.get_tab_border_radius(idx);
-                    button.set_style(`background: ${tab_color}; border-radius: ${tab_border_radius};`);
                 }
             })
 
@@ -258,23 +254,6 @@ export class Stack {
         }
 
         this.reset_visibility(permitted)
-    }
-
-    // returns the tab button border radius based on it's order. 
-    // Only curving the corners on the edges.
-    private get_tab_border_radius(idx: Number): string {
-        let result = `0px 0px 0px 0px`;
-
-        // the minus 4px is to accomodate the inner radius being tighter
-        let radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
-        // only allow a radius up to half the tab_height
-        radius = Math.min(radius, Math.trunc(this.tabs_height / 2));
-        // set each corner's radius based on it's order
-        if (this.tabs.length === 1) result = `${radius}px`;
-        else if (idx === 0) result = `${radius}px 0px 0px ${radius}px`;
-        else if (idx === this.tabs.length - 1) result = `0px ${radius}px ${radius}px 0px`;
-
-        return result;
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
@@ -319,36 +298,6 @@ export class Stack {
 
     private active_meta(): Meta.Window | undefined {
         return this.ext.windows.get(this.active)?.meta;
-    }
-
-    private bind_hint_events(tab: Tab) {
-        let settings = this.ext.settings;
-        let button = this.buttons.get(tab.button);
-        if (button) {
-            let change_id = settings.ext.connect('changed', (_, key) => {
-                if (key === 'hint-color-rgba') {
-                    this.change_tab_color(tab);
-                }
-                return false;
-            });
-            button.connect('destroy', () => { settings.ext.disconnect(change_id) });
-        }
-        this.change_tab_color(tab);
-    }
-
-    private change_tab_color(tab: Tab) {
-        let settings = this.ext.settings;
-        let button = this.buttons.get(tab.button);
-        if (button) {
-            let tab_color = '';
-            if (Ecs.entity_eq(tab.entity, this.active)) {
-                let color_value = settings.hint_color_rgba();
-                tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
-            } else {
-                tab_color = `background: ${INACTIVE_TAB_STYLE}`;
-            }
-            button.set_style(tab_color);
-        }
     }
 
     /** Clears watched tabs and removes all tabs */
@@ -628,7 +577,7 @@ export class Stack {
 
         this.rect = rect;
 
-        this.tabs_height = TAB_HEIGHT * this.ext.dpi;
+        this.tabs_height = TAB_HEIGHT * this.ext.dpi + this.ext.gap_inner;
 
         this.stack_rect = {
             x: rect.x,
@@ -665,10 +614,12 @@ export class Stack {
                     this.reposition();
 
                     for (const comp of this.tabs) {
-                        this.buttons.get(comp.button)?.set_style_class_name(INACTIVE_TAB);
+                        this.buttons.get(comp.button)?.add_style_class_name(INACTIVE_TAB);
+                        this.buttons.get(comp.button)?.remove_style_class_name(ACTIVE_TAB);
                     }
 
-                    widget.set_style_class_name(ACTIVE_TAB);
+                    widget.add_style_class_name(ACTIVE_TAB);
+                    widget.remove_style_class_name(INACTIVE_TAB);
                 }
             })
         });
@@ -689,7 +640,7 @@ export class Stack {
             window.meta.connect('notify::urgent', () => {
                 this.window_exec(comp, entity, (window) => {
                     if (!window.meta.has_focus()) {
-                        this.buttons.get(button)?.set_style_class_name(URGENT_TAB);
+                        this.buttons.get(button)?.add_style_class_name(URGENT_TAB);
                     }
                 })
             })

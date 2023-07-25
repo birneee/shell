@@ -2780,7 +2780,8 @@ function load_theme(style: Style): string | any {
             }
 
             // Merge theme update with pop shell styling
-            existing_theme.load_stylesheet(STYLESHEETS[pop_stylesheet]);
+            //TODO apply but do not overwrite existing pop-shell rules
+            //existing_theme.load_stylesheet(STYLESHEETS[pop_stylesheet]);
 
             // Perform theme update
             theme_context.set_theme(existing_theme);
