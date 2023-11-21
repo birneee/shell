@@ -1,13 +1,10 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as lib from './lib.js';
 
-import * as lib from 'lib';
-
-const GLib: GLib = imports.gi.GLib;
-const { spawn } = imports.misc.util;
+import GLib from 'gi://GLib';
+import { spawn } from 'resource:///org/gnome/shell/misc/util.js';
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
-export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
+export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x0', '0x0', '0x0'];
 export var SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
 export function get_window_role(xid: string): string | null {
@@ -25,7 +22,7 @@ export function get_hint(xid: string, hint: string): Array<string> | null {
 
     const array = parse_cardinal(out);
 
-    return array ? array.map((value) => value.startsWith('0x') ? value : '0x' + value) : null;
+    return array ? array.map((value) => (value.startsWith('0x') ? value : '0x' + value)) : null;
 }
 
 function size_params(line: string): [number, number] | null {
@@ -77,7 +74,7 @@ export function get_xid(meta: Meta.Window): string | null {
 
 export function may_decorate(xid: string): boolean {
     const hints = motif_hints(xid);
-    return hints ? hints[2] != '0x0' : true;
+    return hints ? hints[2] == '0x0' || hints[2] == '0x1' : true;
 }
 
 export function motif_hints(xid: string): Array<string> | null {
@@ -95,12 +92,22 @@ function consume_key(string: string): number | null {
 
 function parse_cardinal(string: string): Array<string> | null {
     const pos = consume_key(string);
-    return pos ? string.slice(pos + 1).trim().split(', ') : null;
+    return pos
+        ? string
+              .slice(pos + 1)
+              .trim()
+              .split(', ')
+        : null;
 }
 
 function parse_string(string: string): string | null {
     const pos = consume_key(string);
-    return pos ? string.slice(pos + 1).trim().slice(1, -1) : null;
+    return pos
+        ? string
+              .slice(pos + 1)
+              .trim()
+              .slice(1, -1)
+        : null;
 }
 
 function xprop_cmd(xid: string, args: string): string | null {

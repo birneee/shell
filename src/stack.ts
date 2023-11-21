@@ -1,22 +1,21 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+import type { ShellWindow } from './window.js';
 
-import type { Entity } from './ecs';
-import type { Ext } from './extension';
-import type { ShellWindow } from './window';
-
-import * as Ecs from 'ecs';
-import * as a from 'arena';
+import * as Ecs from './ecs.js';
+import * as a from './arena.js';
 
 const Arena = a.Arena;
-const { Clutter, GObject, St } = imports.gi;
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
 const BASE_TAB = 'pop-shell-tab';
 const ACTIVE_TAB = 'pop-shell-tab-active';
 const INACTIVE_TAB = 'pop-shell-tab-inactive';
 const URGENT_TAB = 'pop-shell-tab-urgent';
 
-export var TAB_HEIGHT: number = 24
+export var TAB_HEIGHT: number = 24;
 
 interface Tab {
     active: boolean;
@@ -33,7 +32,7 @@ interface StackWidgets {
 function stack_widgets_new(): StackWidgets {
     let tabs = new St.BoxLayout({
         style_class: 'pop-shell-stack',
-        x_expand: true
+        x_expand: true,
     });
 
     tabs.get_layout_manager()?.set_homogeneous(true);
@@ -41,83 +40,91 @@ function stack_widgets_new(): StackWidgets {
     return { tabs };
 }
 
-const ContainerButton = GObject.registerClass({
-    Signals: { 'activate': {} },
-}, class ImageButton extends St.Button {
-    _init(icon: St.Icon) {
-        super._init({
-            child: icon,
-            x_expand: true,
-            y_expand: true,
-        })
-    }
-})
+const ContainerButton = GObject.registerClass(
+    {
+        Signals: { activate: {} },
+    },
+    class ImageButton extends St.Button {
+        _init(icon: St.Icon) {
+            super._init({
+                child: icon,
+                x_expand: true,
+                y_expand: true,
+            });
+        }
+    },
+);
 
 interface TabButton extends St.Button {
     set_title: (title: string) => void;
 }
 
-const TabButton = GObject.registerClass({
-    Signals: { 'activate': {} },
-}, class TabButton extends St.Button {
-    _init(window: ShellWindow) {
-        const icon = window.icon(window.ext, 24)
-        icon.set_x_align(Clutter.ActorAlign.START)
-        icon.add_style_class_name('icon')
+const TabButton = GObject.registerClass(
+    {
+        Signals: { activate: {} },
+    },
+    class TabButton extends St.Button {
+        _init(window: ShellWindow) {
+            const icon = window.icon(window.ext, 24);
+            icon.set_x_align(Clutter.ActorAlign.START);
+            icon.add_style_class_name('icon');
 
-        const label = new St.Label({
-            y_expand: true,
-            x_align: Clutter.ActorAlign.START,
-            y_align: Clutter.ActorAlign.CENTER,
-            style: "padding-left: 8px"
-        })
+            const label = new St.Label({
+                y_expand: true,
+                x_align: Clutter.ActorAlign.START,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: 'padding-left: 8px',
+            });
 
-        label.text = window.title()
-        label.add_style_class_name('label')
+        label.text = window.title();
+        label.add_style_class_name('label');
 
-        const container = new St.BoxLayout({
-            y_expand: true,
-            y_align: Clutter.ActorAlign.CENTER,
-        })
-        container.add_style_class_name('container')
+            const container = new St.BoxLayout({
+                y_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            container.add_style_class_name('container');
 
-        const close_button = new ContainerButton(new St.Icon({
-            icon_name: 'window-close-symbolic',
-            icon_size: 24,
-            y_align: Clutter.ActorAlign.CENTER,
-        }))
-        close_button.add_style_class_name('close-button')
+            const close_button = new ContainerButton(
+                new St.Icon({
+                    icon_name: 'window-close-symbolic',
+                    icon_size: 24,
+                    y_align: Clutter.ActorAlign.CENTER,
+                }),
+            );
+            close_button.add_style_class_name('close-button');
 
-        close_button.connect('clicked', () => {
-            window.meta.delete(global.get_current_time())
-        })
+            close_button.connect('clicked', () => {
+                window.meta.delete(global.get_current_time());
+            });
 
-        close_button.set_x_align(Clutter.ActorAlign.END)
-        close_button.set_y_align(Clutter.ActorAlign.CENTER)
+            close_button.set_x_align(Clutter.ActorAlign.END);
+            close_button.set_y_align(Clutter.ActorAlign.CENTER);
 
-        container.add_actor(icon)
-        container.add_actor(label)
-        container.add_actor(close_button)
+            container.add_actor(icon);
+            container.add_actor(label);
+            container.add_actor(close_button);
 
-        super._init({
-            child: container,
-            x_expand: true,
-            y_expand: true,
-            y_align: Clutter.ActorAlign.CENTER,
-        })
+            super._init({
+                child: container,
+                x_expand: true,
+                y_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
 
-        this.add_style_class_name(BASE_TAB)
-        this.add_style_class_name('button')
+            this.add_style_class_name(BASE_TAB);
+            this.add_style_class_name('button');
 
-        this._title = label
+        this._title = label;
     }
 
-    set_title(text: string) {
-        if (this._title) {
-            this._title.text = text
+        set_title(text: string) {
+            if (this._title) {
+                this._title.text = text;
+            }
         }
-    }
-})
+    },
+);
 
 export class Stack {
     ext: Ext;
@@ -126,7 +133,7 @@ export class Stack {
 
     active: Entity;
 
-    active_id: number = 0
+    active_id: number = 0;
 
     prev_active: null | Entity = null;
     prev_active_id: number = 0;
@@ -178,7 +185,7 @@ export class Stack {
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
-        let comp = this.tabs.length
+        let comp = this.tabs.length;
         this.tabs.push(tab);
         this.watch_signals(comp, id, window);
         this.widgets.tabs.add(button);
@@ -200,24 +207,24 @@ export class Stack {
 
     activate_prev() {
         if (this.prev_active) {
-            this.activate(this.prev_active)
+            this.activate(this.prev_active);
         }
     }
 
     /** Activates the tab of this entity */
     activate(entity: Entity) {
-        const permitted = this.permitted_to_show()
+        const permitted = this.permitted_to_show();
 
         if (this.widgets) this.widgets.tabs.visible = permitted;
 
-        this.reset_visibility(permitted)
+        this.reset_visibility(permitted);
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
 
         if (!Ecs.entity_eq(entity, this.active)) {
-            this.prev_active = this.active
-            this.prev_active_id = this.active_id
+            this.prev_active = this.active;
+            this.prev_active_id = this.active_id;
         }
 
         this.active_connect(win.meta, entity);
@@ -232,7 +239,7 @@ export class Stack {
                 if (Ecs.entity_eq(entity, component.entity)) {
                     this.active_id = id;
                     component.active = true;
-                    if (actor) actor.show()
+                    if (actor) actor.show();
                 } else {
                     component.active = false;
                     if (actor) actor.hide();
@@ -248,12 +255,12 @@ export class Stack {
                         button.add_style_class_name(INACTIVE_TAB)   
                     }
                 }
-            })
+            });
 
             id += 1;
         }
 
-        this.reset_visibility(permitted)
+        this.reset_visibility(permitted);
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
@@ -269,20 +276,21 @@ export class Stack {
 
     private active_reconnect(window: Meta.Window) {
         // Attach this callback on both signals of the window
-        const on_window_changed = () => this.on_grab(() => {
-            const window = this.ext.windows.get(this.active);
-            if (window) {
-                this.update_positions(window.meta.get_frame_rect());
-                this.window_changed()
-            } else {
-                this.active_disconnect();
-            }
-        });
+        const on_window_changed = () =>
+            this.on_grab(() => {
+                const window = this.ext.windows.get(this.active);
+                if (window) {
+                    this.update_positions(window.meta.get_frame_rect());
+                    this.window_changed();
+                } else {
+                    this.active_disconnect();
+                }
+            });
 
         this.active_signals = [
             window.connect('size-changed', on_window_changed),
-            window.connect('position-changed', on_window_changed)
-        ]
+            window.connect('position-changed', on_window_changed),
+        ];
     }
 
     /** Disconnects signals from the active window in the stack */
@@ -290,7 +298,7 @@ export class Stack {
         const active_meta = this.active_meta();
 
         if (this.active_signals && active_meta) {
-            for (const s of this.active_signals) active_meta.disconnect(s)
+            for (const s of this.active_signals) active_meta.disconnect(s);
         }
 
         this.active_signals = null;
@@ -329,9 +337,10 @@ export class Stack {
 
     /** Deactivate the signals belonging to an entity */
     deactivate(w: ShellWindow) {
-        for (const c of this.tabs) if (Ecs.entity_eq(c.entity, w.entity)) {
-            this.tab_disconnect(c);
-        }
+        for (const c of this.tabs)
+            if (Ecs.entity_eq(c.entity, w.entity)) {
+                this.tab_disconnect(c);
+            }
 
         if (this.active_signals && Ecs.entity_eq(this.active, w.entity)) {
             this.active_disconnect();
@@ -347,21 +356,18 @@ export class Stack {
         for (const c of this.tabs) {
             this.tab_disconnect(c);
             if (this.workspace === this.ext.active_workspace()) {
-                const win = this.ext.windows.get(c.entity)
+                const win = this.ext.windows.get(c.entity);
                 if (win) {
-                    win.meta.get_compositor_private()?.show()
-                    win.stack = null
+                    win.meta.get_compositor_private()?.show();
+                    win.stack = null;
                 }
             }
-
         }
 
         for (const b of this.buttons.values()) {
             try {
-                b.destroy()
-            } catch (e) {
-
-            }
+                b.destroy();
+            } catch (e) {}
         }
 
         if (this.widgets) {
@@ -393,7 +399,7 @@ export class Stack {
      *  in an active workspace change. */
     recreate_widgets() {
         if (this.widgets !== null) {
-            this.widgets.tabs.disconnect(this.tabs_destroy)
+            this.widgets.tabs.disconnect(this.tabs_destroy);
             this.widgets = stack_widgets_new();
 
             global.window_group.add_child(this.widgets.tabs);
@@ -403,7 +409,7 @@ export class Stack {
             this.active_disconnect();
 
             for (const c of this.tabs.splice(0)) {
-                this.tab_disconnect(c)
+                this.tab_disconnect(c);
                 const window = this.ext.windows.get(c.entity);
                 if (window) this.add(window);
             }
@@ -414,13 +420,13 @@ export class Stack {
             const window = this.ext.windows.get(this.active);
             if (!window) return;
 
-            this.active_reconnect(window.meta)
+            this.active_reconnect(window.meta);
         }
     }
 
     remove_by_pos(idx: number) {
         const c = this.tabs[idx];
-        if (c) this.remove_tab_component(c, idx)
+        if (c) this.remove_tab_component(c, idx);
     }
 
     remove_tab_component(c: Tab, idx: number) {
@@ -432,7 +438,7 @@ export class Stack {
         if (b) {
             this.widgets.tabs.remove_child(b);
             b.destroy();
-            this.buttons.remove(c.button)
+            this.buttons.remove(c.button);
         }
 
         this.tabs.splice(idx, 1);
@@ -443,16 +449,16 @@ export class Stack {
         if (!this.widgets) return null;
 
         if (this.prev_active && Ecs.entity_eq(entity, this.prev_active)) {
-            this.prev_active = null
-            this.prev_active_id = 0
+            this.prev_active = null;
+            this.prev_active_id = 0;
         }
 
         let idx = 0;
         for (const c of this.tabs) {
             if (Ecs.entity_eq(c.entity, entity)) {
-                this.remove_tab_component(c, idx)
+                this.remove_tab_component(c, idx);
                 if (this.active_id > idx) {
-                    this.active_id -= 1
+                    this.active_id -= 1;
                 }
                 return idx;
             }
@@ -464,9 +470,10 @@ export class Stack {
 
     replace(window: ShellWindow) {
         if (!this.widgets) return;
-        const c = this.tabs[this.active_id], actor = window.meta.get_compositor_private();
+        const c = this.tabs[this.active_id],
+            actor = window.meta.get_compositor_private();
         if (c && actor) {
-            this.tab_disconnect(c)
+            this.tab_disconnect(c);
 
             if (Ecs.entity_eq(window.entity, this.active)) {
                 this.active_connect(window.meta, window.entity);
@@ -518,28 +525,27 @@ export class Stack {
     }
 
     permitted_to_show(workspace?: number): boolean {
-        const active_workspace = workspace ?? global.workspace_manager.get_active_workspace_index()
-        const primary = global.display.get_primary_monitor()
-        const only_primary = this.ext.settings.workspaces_only_on_primary()
+        const active_workspace = workspace ?? global.workspace_manager.get_active_workspace_index();
+        const primary = global.display.get_primary_monitor();
+        const only_primary = this.ext.settings.workspaces_only_on_primary();
 
-        return active_workspace === this.workspace
-            || (only_primary && this.monitor != primary)
+        return active_workspace === this.workspace || (only_primary && this.monitor != primary);
     }
 
     reset_visibility(permitted: boolean) {
-        let idx = 0
+        let idx = 0;
 
         for (const c of this.tabs) {
             this.actor_exec(idx, c.entity, (actor) => {
                 if (permitted && this.active_id === idx) {
                     actor.show();
-                    return
+                    return;
                 }
 
-                actor.hide()
-            })
+                actor.hide();
+            });
 
-            idx += 1
+            idx += 1;
         }
     }
 
@@ -548,14 +554,14 @@ export class Stack {
         this.on_grab(() => {
             if (!this.widgets) return;
 
-            const permitted = this.permitted_to_show()
+            const permitted = this.permitted_to_show();
 
-            this.widgets.tabs.visible = permitted
+            this.widgets.tabs.visible = permitted;
 
-            if (permitted) this.reposition()
+            if (permitted) this.reposition();
 
-            this.reset_visibility(permitted)
-        })
+            this.reset_visibility(permitted);
+        });
     }
 
     /** Changes visibility of the stack's actors */
@@ -565,9 +571,9 @@ export class Stack {
         this.widgets.tabs.visible = visible;
 
         if (visible) {
-            this.widgets.tabs.show()
+            this.widgets.tabs.show();
         } else {
-            this.widgets.tabs.hide()
+            this.widgets.tabs.hide();
         }
     }
 
@@ -609,7 +615,7 @@ export class Stack {
                 const actor = window.meta.get_compositor_private();
                 if (actor) {
                     actor.show();
-                    window.activate(false)
+                    window.activate(false);
 
                     this.reposition();
 
@@ -621,7 +627,7 @@ export class Stack {
                     widget.add_style_class_name(ACTIVE_TAB);
                     widget.remove_style_class_name(INACTIVE_TAB);
                 }
-            })
+            });
         });
 
         // Detach signals if they're still attached
@@ -633,7 +639,7 @@ export class Stack {
         this.tabs[comp].signals = [
             window.meta.connect('notify::title', () => {
                 this.window_exec(comp, entity, (window) => {
-                    this.buttons.get(button)?.set_title(window.title())
+                    this.buttons.get(button)?.set_title(window.title());
                 });
             }),
 
@@ -642,8 +648,8 @@ export class Stack {
                     if (!window.meta.has_focus()) {
                         this.buttons.get(button)?.add_style_class_name(URGENT_TAB);
                     }
-                })
-            })
+                });
+            }),
         ];
     }
 
@@ -653,17 +659,17 @@ export class Stack {
 
     private actor_exec(comp: number, entity: Entity, func: (window: Clutter.Actor) => void) {
         this.window_exec(comp, entity, (window) => {
-            func(window.meta.get_compositor_private() as Clutter.Actor)
-        })
+            func(window.meta.get_compositor_private() as Clutter.Actor);
+        });
     }
 
     private window_exec(comp: number, entity: Entity, func: (window: ShellWindow) => void) {
         const window = this.ext.windows.get(entity);
         if (window && window.actor_exists()) {
-            func(window)
+            func(window);
         } else {
-            const tab = this.tabs[comp]
-            if (tab) this.tab_disconnect(tab)
+            const tab = this.tabs[comp];
+            if (tab) this.tab_disconnect(tab);
         }
     }
 }
