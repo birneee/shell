@@ -11,5 +11,4 @@ debian/*
 !debian/rules
 !debian/*install
 .confirm_shortcut_change
-.vscode
 node_modules
