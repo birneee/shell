@@ -188,7 +188,7 @@ export class Stack {
         let comp = this.tabs.length;
         this.tabs.push(tab);
         this.watch_signals(comp, id, window);
-        this.widgets.tabs.add(button);
+        this.widgets.tabs.add_child(button);
     }
 
     /** Activates a tab based on the previously active entry */
