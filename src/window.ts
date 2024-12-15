@@ -113,7 +113,6 @@ export class ShellWindow {
         }
 
         this.bind_window_events();
-        this.bind_hint_events();
 
         if (this.border) global.window_group.add_child(this.border);
 
@@ -152,58 +151,6 @@ export class ShellWindow {
                     this.window_raised();
                 }),
             );
-    }
-
-    private bind_hint_events() {
-        if (!this.border) return;
-
-        let settings = this.ext.settings;
-        let change_id = settings.ext.connect('changed', (_, key) => {
-            if (this.border) {
-                if (key === 'hint-color-rgba') {
-                    this.update_hint_colors();
-                }
-            }
-            return false;
-        });
-
-        this.border.connect('destroy', () => {
-            settings.ext.disconnect(change_id);
-        });
-        this.border.connect('style-changed', () => {
-            this.on_style_changed();
-        });
-
-        this.update_hint_colors();
-    }
-
-    /**
-     * Adjust the colors for:
-     * - border hint
-     * - overlay
-     */
-    private update_hint_colors() {
-        let settings = this.ext.settings;
-        const color_value = settings.hint_color_rgba();
-
-        if (this.ext.overlay) {
-            const gdk = new Gdk.RGBA();
-            // TODO Probably move overlay color/opacity to prefs.js in future,
-            // For now mimic the hint color with lower opacity
-            const overlay_alpha = 0.3;
-            const orig_overlay = 'rgba(53, 132, 228, 0.3)';
-            gdk.parse(color_value);
-
-            if (utils.is_dark(gdk.to_string())) {
-                // too dark, use the blue overlay
-                gdk.parse(orig_overlay);
-            }
-
-            gdk.alpha = overlay_alpha;
-            this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
-        }
-
-        this.update_border_style();
     }
 
     cmdline(): string | null {
@@ -442,8 +389,7 @@ export class ShellWindow {
         if (!this.border) return;
 
         this.restack();
-        this.update_border_style();
-        if (this.ext.settings.active_hint()) {
+        if (true) {
             let border = this.border;
 
             const permitted = () => {
@@ -643,15 +589,6 @@ export class ShellWindow {
                 border.set_position(x, y);
                 border.set_size(width, height);
             }
-        }
-    }
-
-    update_border_style() {
-        const { settings } = this.ext;
-        const color_value = settings.hint_color_rgba();
-        const radius_value = settings.active_hint_border_radius();
-        if (this.border) {
-            this.border.set_style(`border-color: ${color_value}; border-radius: ${radius_value}px;`);
         }
     }
 

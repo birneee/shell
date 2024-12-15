@@ -24,8 +24,6 @@ export class Indicator {
 
     toggle_tiled: any;
     toggle_titles: null | any;
-    toggle_active: any;
-    border_radius: any;
 
     entry_gaps: any;
 
@@ -58,26 +56,10 @@ export class Indicator {
 
         this.toggle_tiled = tiled(ext);
 
-        this.toggle_active = toggle(_('Show Active Hint'), ext.settings.active_hint(), (toggle) => {
-            ext.settings.set_active_hint(toggle.state);
-        });
-
         this.entry_gaps = number_entry(_('Gaps'), ext.settings.gap_inner(), (value) => {
             ext.settings.set_gap_inner(value);
             ext.settings.set_gap_outer(value);
         });
-
-        this.border_radius = number_entry(
-            _('Active Border Radius'),
-            {
-                value: ext.settings.active_hint_border_radius(),
-                min: 0,
-                max: 30,
-            },
-            (value) => {
-                ext.settings.set_active_hint_border_radius(value);
-            },
-        );
 
         bm.addMenuItem(this.toggle_tiled);
         bm.addMenuItem(floating_window_exceptions(ext, bm));
@@ -91,12 +73,6 @@ export class Indicator {
             this.toggle_titles = show_title(ext);
             bm.addMenuItem(this.toggle_titles);
         }
-
-        bm.addMenuItem(this.toggle_active);
-        bm.addMenuItem(this.border_radius);
-
-        // CSS Selector
-        bm.addMenuItem(color_selector(ext, bm));
 
         bm.addMenuItem(this.entry_gaps);
     }
@@ -324,45 +300,4 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 function tiled(ext: Ext): any {
     let t = toggle(_('Tile Windows'), null != ext.auto_tiler, () => ext.toggle_tiling());
     return t;
-}
-
-function color_selector(ext: Ext, menu: any) {
-    let color_selector_item = new PopupMenuItem('Active Hint Color');
-    let color_button = new St.Button();
-    let settings = ext.settings;
-    let selected_color = settings.hint_color_rgba();
-
-    // TODO, find a way to expand the button text, :)
-    color_button.label = '           '; // blank for now
-    color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
-
-    settings.ext.connect('changed', (_, key) => {
-        if (key === 'hint-color-rgba') {
-            let color_value = settings.hint_color_rgba();
-            color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);
-        }
-    });
-
-    color_button.set_x_align(Clutter.ActorAlign.END);
-    color_button.set_x_expand(false);
-
-    color_selector_item.label.get_clutter_text().set_x_expand(true);
-    color_selector_item.label.set_y_align(Clutter.ActorAlign.CENTER);
-
-    color_selector_item.add_child(color_button);
-    color_button.connect('button-press-event', () => {
-        let path = get_current_path() + '/color_dialog/main.js';
-        let resp = GLib.spawn_command_line_async(`gjs --module ${path}`);
-        if (!resp) {
-            return null;
-        }
-
-        // clean up and focus on the color dialog
-        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
-            menu.close();
-            return false;
-        });
-    });
-
-    return color_selector_item;
 }

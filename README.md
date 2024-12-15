@@ -216,3 +216,7 @@ Licensed under the GNU General Public License, Version 3.0, ([LICENSE](LICENSE) 
 ### Contribution
 
 Any contribution intentionally submitted for inclusion in the work by you shall be licensed under the GNU GPLv3.
+
+## Useful commands
+
+- test during develpment: `dbus-run-session -- gnome-shell --nested --wayland`

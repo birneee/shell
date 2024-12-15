@@ -1576,7 +1576,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        if (this.focus_window() == win && this.settings.active_hint()) {
+        if (this.focus_window() == win) {
             if (win.meta.minimized) {
                 win.hide_border();
             } else {
@@ -1900,10 +1900,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(this.settings.ext, 'changed', (_s, key: string) => {
             switch (key) {
-                case 'active-hint':
-                    if (indicator) indicator.toggle_active.setToggleState(this.settings.active_hint());
-
-                    this.show_border_on_focused();
                 case 'gap-inner':
                     this.on_gap_inner();
                     break;
@@ -2219,9 +2215,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.button.icon.gicon = this.button_gio_icon_auto_off; // type: Gio.Icon
 
-            if (this.settings.active_hint()) {
-                this.show_border_on_focused();
-            }
+            this.show_border_on_focused();
         }
     }
 

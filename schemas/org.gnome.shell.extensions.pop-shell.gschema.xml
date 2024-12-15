@@ -2,17 +2,6 @@
 <schemalist gettext-domain="pop-shell">
     <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
         <!-- Appearance Options -->
-        <key type="b" name="active-hint">
-            <default>false</default>
-            <summary>Show a hint around the active window</summary>
-        </key>
-
-        <key type="u" name="active-hint-border-radius">
-            <default>5</default>
-            <range min="0" max="30"/>
-            <summary>Border radius for active window hint, in pixels</summary>
-        </key>
-
         <key type="b" name="fullscreen-launcher">
             <default>false</default>
             <summary>Allow showing launcher above fullscreen windows</summary>
@@ -268,10 +257,6 @@
             <summary>Move window to the rightward monitor</summary>
         </key>
 
-        <key type="s" name="hint-color-rgba">
-            <default>'rgba(251, 184, 108, 1)'</default>
-            <summary>The current active-hint-color in RGBA</summary>
-        </key>
         <key type="u" name="log-level">
             <default>0</default>
             <summary>
