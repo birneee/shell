@@ -63,7 +63,7 @@ export class ShellWindow {
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
     destroying: boolean = false;
-    
+
     // Awaiting reassignment after a display update
     reassignment: boolean = false;
 
@@ -216,7 +216,7 @@ export class ShellWindow {
         // look I guess I'll hack something together in here if at all possible
         // Because Meta.Window.is_client_decorated() was removed in Meta 15, using it breaks the extension in gnome 47 or higher
         //return this.meta.window_type == Meta.WindowType.META_WINDOW_OVERRIDE_OTHER;
-        const xid = this.xid()
+        const xid = this.xid();
         const extents = xid ? xprop.get_frame_extents(xid) : false;
         if (!extents) return false;
         return true;
@@ -307,6 +307,13 @@ export class ShellWindow {
         }
 
         this.hide_border();
+
+        const max_width = ext.settings.max_window_width();
+        if (max_width > 0 && rect.width > max_width) {
+            rect.x += (rect.width - max_width) / 2;
+            rect.width = max_width;
+        }
+
         const clone = Rect.Rectangle.from_meta(rect);
         const meta = this.meta;
         const actor = meta.get_compositor_private();
@@ -694,11 +701,7 @@ function place_pointer_on(ext: Ext, win: Meta.Window) {
             y += 8;
     }
 
-    const display = Gdk.DisplayManager.get().get_default_display();
-
-    if (display) {
-        display.get_default_seat().get_pointer().warp(display.get_default_screen(), x, y);
-    }
+    global.stage.get_context().get_backend().get_default_seat().warp_pointer(x, y);
 }
 
 function pointer_already_on_window(meta: Meta.Window): boolean {
