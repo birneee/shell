@@ -11,7 +11,6 @@ import type { Rectangle } from './rectangle.js';
 import * as scheduler from './scheduler.js';
 import * as focus from './focus.js';
 
-import Gdk from 'gi://Gdk';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
