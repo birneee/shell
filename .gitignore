@@ -13,3 +13,4 @@ debian/*
 .confirm_shortcut_change
 node_modules
 result
+.direnv

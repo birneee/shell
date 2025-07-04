@@ -24,8 +24,9 @@
           };
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs; [
-              typescript
               glib
+              gnumake
+              typescript
             ];
           };
         }
